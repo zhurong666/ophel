@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
+  CheckIcon,
+  ChevronDownIcon,
+  ClearIcon,
   CollapseAllIcon,
+  CopyIcon,
   ExpandAllIcon,
   LocateIcon,
   ScrollBottomIcon,
@@ -13,7 +17,6 @@ import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { t, getCurrentLang } from "~utils/i18n"
 import { formatWordCount } from "~utils/format"
-import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
 import { showToast } from "~utils/toast"
 
 interface OutlineTabProps {
@@ -299,7 +302,7 @@ const OutlineNodeView: React.FC<{
                 onToggle(node)
               }
             }}>
-            ▸
+            <ChevronDownIcon size={16} style={{ transform: "rotate(-90deg)" }} />
           </span>
 
           {/* 用户提问: 徽章 (图标+角标数字) */}
@@ -347,27 +350,10 @@ const OutlineNodeView: React.FC<{
                 onMouseLeave={() => setIsHoveringAction(false)}>
                 {copySuccess ? (
                   // 成功对号图标
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round">
-                    <polyline points={CHECK_ICON_POINTS} />
-                  </svg>
+                  <CheckIcon size={14} color="#10b981" />
                 ) : (
                   // 复制图标
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round">
-                    <rect {...COPY_ICON_RECT} />
-                    <path d={COPY_ICON_PATH} />
-                  </svg>
+                  <CopyIcon size={14} />
                 )}
               </span>
             </Tooltip>
@@ -1199,7 +1185,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   alignItems: "center",
                   justifyContent: "center",
                 }}>
-                ×
+                <ClearIcon size={14} />
               </button>
             )}
           </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { CopyIcon, PageContentIcon } from "~components/icons"
 import type { Conversation, Folder } from "~core/conversation-manager"
 import { t } from "~utils/i18n"
 
@@ -224,10 +225,6 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
   onMoveTo,
   onDelete,
 }) => {
-  const pinText = conversation.pinned
-    ? t("conversationsUnpin") || "取消置顶"
-    : t("conversationsPin") || "📌 置顶"
-
   return (
     <ContextMenu anchorEl={anchorEl} onClose={onClose}>
       <MenuButton
@@ -242,7 +239,9 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
           onClose()
           onTogglePin()
         }}>
-        {pinText}
+        {conversation.pinned
+          ? t("conversationsUnpin") || "取消置顶"
+          : t("conversationsPin") || "置顶"}
       </MenuButton>
       <MenuButton
         onClick={() => {
@@ -294,21 +293,30 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           onClose()
           onExportMarkdown()
         }}>
-        📝 {t("exportToMarkdown") || "Markdown"}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <PageContentIcon size={14} />
+          <span>{t("exportToMarkdown") || "Markdown"}</span>
+        </div>
       </MenuButton>
       <MenuButton
         onClick={() => {
           onClose()
           onExportJSON()
         }}>
-        📋 {t("exportToJSON") || "JSON"}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <CopyIcon size={14} />
+          <span>{t("exportToJSON") || "JSON"}</span>
+        </div>
       </MenuButton>
       <MenuButton
         onClick={() => {
           onClose()
           onExportTXT()
         }}>
-        📄 {t("exportToTXT") || "TXT"}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <PageContentIcon size={14} />
+          <span>{t("exportToTXT") || "TXT"}</span>
+        </div>
       </MenuButton>
     </ContextMenu>
   )

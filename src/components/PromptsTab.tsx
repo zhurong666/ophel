@@ -1,7 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import { ExportIcon, ImportIcon } from "~components/icons"
+import {
+  ClearIcon,
+  CopyIcon,
+  DeleteIcon,
+  DragIcon,
+  EditIcon,
+  ExportIcon,
+  EyeIcon,
+  ImportIcon,
+  PinIcon,
+  TimeIcon,
+} from "~components/icons"
 import { Button, ConfirmDialog, InputDialog, Tooltip } from "~components/ui"
 import {
   extractVariables,
@@ -1076,7 +1087,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 alignItems: "center",
                 justifyContent: "center",
               }}>
-              ✕
+              <ClearIcon size={16} />
             </button>
           </div>
           {/* 内容区域 */}
@@ -1336,6 +1347,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
             style={{
               padding: "4px 8px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              lineHeight: 1,
               background:
                 selectedCategory === VIRTUAL_CATEGORY.RECENT
                   ? "var(--gh-primary, #4285f4)"
@@ -1349,7 +1364,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   ? "1px solid var(--gh-primary, #4285f4)"
                   : "1px solid transparent",
             }}>
-            🕐
+            <TimeIcon size={14} />
           </span>
         </Tooltip>
 
@@ -1482,7 +1497,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       fontSize: "12px",
                       color: p.pinned ? "white" : "var(--gh-text-secondary, #6b7280)",
                     }}>
-                    📌
+                    <PinIcon size={12} filled={p.pinned} />
                   </button>
                 </Tooltip>
                 <Tooltip content="拖动排序">
@@ -1509,7 +1524,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                       fontSize: "12px",
                     }}>
-                    ☰
+                    <DragIcon size={14} />
                   </button>
                 </Tooltip>
                 {/* ⭐ 预览按钮 */}
@@ -1533,7 +1548,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                       fontSize: "12px",
                     }}>
-                    👁
+                    <EyeIcon size={14} />
                   </button>
                 </Tooltip>
                 <Tooltip content={t("copy")}>
@@ -1552,7 +1567,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                       fontSize: "12px",
                     }}>
-                    📋
+                    <CopyIcon size={14} />
                   </button>
                 </Tooltip>
                 <Tooltip content={t("edit")}>
@@ -1575,7 +1590,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                       fontSize: "12px",
                     }}>
-                    ✏
+                    <EditIcon size={14} />
                   </button>
                 </Tooltip>
                 <Tooltip content={t("delete")}>
@@ -1595,7 +1610,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       fontSize: "12px",
                       color: "var(--gh-text-danger, #ef4444)",
                     }}>
-                    🗑
+                    <DeleteIcon size={14} />
                   </button>
                 </Tooltip>
               </div>
