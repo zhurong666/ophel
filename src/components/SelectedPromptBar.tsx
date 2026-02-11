@@ -148,7 +148,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
           whiteSpace: "nowrap",
           userSelect: "none",
         }}>
-        {t("currentPrompt") || "当前提示词"}:
+        {t("currentPrompt") || "当前提示词"}
       </span>
       <Tooltip content={title}>
         <span
