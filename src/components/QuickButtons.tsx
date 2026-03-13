@@ -489,6 +489,61 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     setGroupPosition(null)
   }, [quickButtonsSide])
 
+  useEffect(() => {
+    let rafId: number | null = null
+    let debounceId: number | null = null
+    let needsFollowUp = false
+
+    const clampIfNeeded = () => {
+      setGroupPosition((prev) => {
+        if (!prev) return prev
+        const next = clampGroupPosition(prev.x, prev.y)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return next
+      })
+    }
+
+    const scheduleRaf = () => {
+      if (rafId !== null) {
+        needsFollowUp = true
+        return
+      }
+
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        clampIfNeeded()
+        if (needsFollowUp) {
+          needsFollowUp = false
+          scheduleRaf()
+        }
+      })
+    }
+
+    const scheduleDebounce = () => {
+      if (debounceId !== null) {
+        window.clearTimeout(debounceId)
+      }
+      debounceId = window.setTimeout(() => {
+        debounceId = null
+        clampIfNeeded()
+      }, 120)
+    }
+
+    const handleResize = () => {
+      scheduleRaf()
+      scheduleDebounce()
+    }
+
+    window.addEventListener("resize", handleResize)
+    window.visualViewport?.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      window.visualViewport?.removeEventListener("resize", handleResize)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      if (debounceId !== null) window.clearTimeout(debounceId)
+    }
+  }, [clampGroupPosition])
+
   const clearDragTimer = () => {
     if (dragTimerRef.current) {
       window.clearTimeout(dragTimerRef.current)
