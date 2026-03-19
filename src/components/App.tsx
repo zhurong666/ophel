@@ -97,6 +97,7 @@ const SETTINGS_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinitio
   shortcuts: { key: "shortcutsTab", fallback: "Quick Buttons" },
   toolsMenu: { key: "toolboxMenu", fallback: "Toolbox" },
   [FEATURES_TAB_IDS.TAB_SETTINGS]: { key: "tabSettingsTab", fallback: "Tab Settings" },
+  [FEATURES_TAB_IDS.REMINDER]: { key: "reminderTab", fallback: "Alerts" },
   [FEATURES_TAB_IDS.OUTLINE]: { key: "outlineSettingsTitle", fallback: "Outline" },
   [FEATURES_TAB_IDS.CONVERSATIONS]: {
     key: "conversationsSettingsTitle",
@@ -292,7 +293,10 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "tab-auto-focus": "autoFocusLabel",
   "tab-auto-rename": "autoRenameTabLabel",
   "tab-notification-sound": "notificationSoundLabel",
+  "tab-notification-sound-preset": "notificationSoundPresetLabel",
   "tab-notification-volume": "notificationVolumeLabel",
+  "tab-notification-repeat-count": "notificationRepeatCountLabel",
+  "tab-notification-repeat-interval": "notificationRepeatIntervalLabel",
   "tab-notify-when-focused": "notifyWhenFocusedLabel",
   "tab-open-new": "openNewTabLabel",
   "tab-privacy-mode": "privacyModeLabel",

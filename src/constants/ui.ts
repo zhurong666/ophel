@@ -46,6 +46,7 @@ export const FEATURES_TAB_IDS = {
   CONVERSATIONS: "conversations",
   PROMPTS: "prompts",
   TAB_SETTINGS: "tab",
+  REMINDER: "reminder",
   CONTENT: "content",
   READING_HISTORY: "readingHistory",
   TOOLBOX: "toolbox",
@@ -99,6 +100,38 @@ export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
   "appearance-custom-styles": {
     page: NAV_IDS.APPEARANCE,
     subTab: APPEARANCE_TAB_IDS.CUSTOM,
+  },
+  "tab-show-notification": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
+  },
+  "tab-notification-sound": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
+  },
+  "tab-notification-sound-preset": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
+  },
+  "tab-notification-volume": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
+  },
+  "tab-notification-repeat-count": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
+  },
+  "tab-notification-repeat-interval": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
+  },
+  "tab-notify-when-focused": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
+  },
+  "tab-auto-focus": {
+    page: NAV_IDS.FEATURES,
+    subTab: FEATURES_TAB_IDS.REMINDER,
   },
 } as const
 
@@ -1026,3 +1059,29 @@ export const STATUS_COLORS = {
   WARNING: "#f59e0b", // amber-500
   INFO: "var(--gh-text-secondary)",
 } as const
+
+// ==================== 通知声音预设 ====================
+export const NOTIFICATION_SOUND_PRESETS = [
+  {
+    id: "default",
+    labelKey: "notificationSoundPresetDefault",
+    fallback: "Default",
+  },
+  {
+    id: "softChime",
+    labelKey: "notificationSoundPresetSoftChime",
+    fallback: "Soft Chime",
+  },
+  {
+    id: "glassPing",
+    labelKey: "notificationSoundPresetGlassPing",
+    fallback: "Glass Ping",
+  },
+  {
+    id: "brightAlert",
+    labelKey: "notificationSoundPresetBrightAlert",
+    fallback: "Bright Alert",
+  },
+] as const
+
+export type NotificationSoundPresetId = (typeof NOTIFICATION_SOUND_PRESETS)[number]["id"]

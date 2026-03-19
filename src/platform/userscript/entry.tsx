@@ -6,11 +6,60 @@ import { App } from "~components/App"
 
 // 显式导入 NetworkMonitor 初始化函数（避免被 tree-shaking 移除）
 import { initNetworkMonitor } from "../../core/network-monitor"
+import brightAlertNotificationSound from "../../../assets/notification-sounds/bright-alert.ogg?inline"
+import glassPingNotificationSound from "../../../assets/notification-sounds/glass-ping.ogg?inline"
+import softChimeNotificationSound from "../../../assets/notification-sounds/soft-chime.ogg?inline"
+import defaultNotificationSound from "../../../assets/notification-sounds/streaming-complete-v2.mp3?inline"
 // 导入样式为内联字符串（用于注入到 Shadow DOM）
 // 使用相对路径避免别名解析问题
 import mainStyle from "../../style.css?inline"
 import conversationsStyle from "../../styles/conversations.css?inline"
 import settingsStyle from "../../styles/settings.css?inline"
+
+function createMediaObjectUrl(source: string): string {
+  if (!source.startsWith("data:")) {
+    return source
+  }
+
+  const match = source.match(/^data:([^;,]+)?(;base64)?,(.*)$/)
+  if (!match) {
+    return source
+  }
+
+  const mimeType = match[1] || "application/octet-stream"
+  const isBase64 = Boolean(match[2])
+  const payload = match[3] || ""
+
+  let bytes: Uint8Array
+  if (isBase64) {
+    const binary = atob(payload)
+    bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+  } else {
+    bytes = new TextEncoder().encode(decodeURIComponent(payload))
+  }
+
+  return URL.createObjectURL(new Blob([bytes], { type: mimeType }))
+}
+
+const notificationSoundUrls = {
+  default: createMediaObjectUrl(defaultNotificationSound),
+  softChime: createMediaObjectUrl(softChimeNotificationSound),
+  glassPing: createMediaObjectUrl(glassPingNotificationSound),
+  brightAlert: createMediaObjectUrl(brightAlertNotificationSound),
+}
+
+window.__OPHEL_NOTIFICATION_SOUND_URLS__ = notificationSoundUrls
+
+window.addEventListener("unload", () => {
+  Object.values(notificationSoundUrls).forEach((url) => {
+    if (url.startsWith("blob:")) {
+      URL.revokeObjectURL(url)
+    }
+  })
+})
 
 /**
  * Ophel - Userscript Entry Point

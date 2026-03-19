@@ -13,6 +13,13 @@ import type {
   PlatformStorage,
 } from "../types"
 
+const notificationSoundPaths: Record<string, string> = {
+  default: "assets/notification-sounds/streaming-complete-v2.mp3",
+  softChime: "assets/notification-sounds/soft-chime.ogg",
+  glassPing: "assets/notification-sounds/glass-ping.ogg",
+  brightAlert: "assets/notification-sounds/bright-alert.ogg",
+}
+
 /**
  * 扩展版存储实现
  */
@@ -93,6 +100,11 @@ export const platform: Platform = {
       title: options.title,
       body: options.message,
     })
+  },
+
+  getNotificationSoundUrl(presetId: string): string | undefined {
+    const path = notificationSoundPaths[presetId]
+    return path ? chrome.runtime.getURL(path) : undefined
   },
 
   focusWindow(): void {
