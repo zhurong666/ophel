@@ -1490,12 +1490,12 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             label={t("userQueryMarkdownLabel") || "用户问题 Markdown 渲染"}
             description={t("userQueryMarkdownDesc") || "将用户输入的 Markdown 渲染为富文本"}
             settingId="content-user-query-markdown"
-            checked={settings.content?.userQueryMarkdown ?? false}
+            checked={settings.content?.userQueryMarkdown ?? true}
             onChange={() =>
               updateNestedSetting(
                 "content",
                 "userQueryMarkdown",
-                !settings.content?.userQueryMarkdown,
+                !(settings.content?.userQueryMarkdown ?? true),
               )
             }
           />

@@ -327,7 +327,7 @@ export function initUserQueryMarkdownRenderer(ctx: ModulesContext): void {
   const { adapter, settings } = ctx
   modules.userQueryMarkdownRenderer = new UserQueryMarkdownRenderer(
     adapter,
-    settings.content?.userQueryMarkdown ?? false,
+    settings.content?.userQueryMarkdown ?? true,
   )
 }
 

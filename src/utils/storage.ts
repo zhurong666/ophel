@@ -344,7 +344,7 @@ export const DEFAULT_SETTINGS: Settings = {
     formulaDelimiter: true,
     tableCopy: true,
     exportImagesToBase64: false,
-    userQueryMarkdown: false, // 默认关闭
+    userQueryMarkdown: true, // 默认开启
   },
 
   export: {
