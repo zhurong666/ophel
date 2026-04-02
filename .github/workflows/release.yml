@@ -62,6 +62,9 @@ jobs:
             exit 1
           fi
 
+      - name: Sync supporters sections
+        run: pnpm supporters:sync
+
       - name: Build all platforms
         run: pnpm build:all
 
@@ -188,7 +191,9 @@ jobs:
         run: |
           cp README*.md build/userscript/
           mkdir -p build/userscript/.github/readmes
+          mkdir -p build/userscript/assets/support
           cp .github/readmes/README*.md build/userscript/.github/readmes/ 2>/dev/null || true
+          cp -R assets/support/. build/userscript/assets/support/
           # 替换本地图片路径为网络 URL（油猴脚本 release 分支需要）
           sed -i 's|./assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/README*.md
           sed -i 's|../../assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/.github/readmes/README*.md 2>/dev/null || true
