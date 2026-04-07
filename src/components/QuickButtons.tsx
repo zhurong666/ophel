@@ -16,7 +16,7 @@ import {
   smartScrollTo,
   smartScrollToBottom,
 } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS, getSiteTheme } from "~utils/storage"
+import { DEFAULT_SETTINGS, getSiteTheme, type QuickButtonsPosition } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
@@ -38,6 +38,18 @@ interface QuickButtonsProps {
   onModelLockToggle?: () => void
   isModelLocked?: boolean
 }
+
+type ViewportSize = {
+  width: number
+  height: number
+}
+
+type GroupPosition = QuickButtonsPosition
+
+const readViewportSize = (): ViewportSize => ({
+  width: window.visualViewport?.width ?? window.innerWidth,
+  height: window.visualViewport?.height ?? window.innerHeight,
+})
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelOpen,
@@ -64,14 +76,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     }
   }, [])
 
-  const { settings } = useSettingsStore()
+  const { settings, updateNestedSetting } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const adapter = getAdapter()
-  const collapsedButtonsOrder = currentSettings.collapsedButtons || []
+  const quickButtonsSettings = currentSettings.quickButtons || DEFAULT_SETTINGS.quickButtons
+  const collapsedButtonsOrder = quickButtonsSettings.collapsed || []
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
-  const quickButtonsOpacity = Math.min(Math.max(currentSettings.quickButtonsOpacity ?? 1, 0.4), 1)
+  const quickButtonsOpacity = Math.min(Math.max(quickButtonsSettings.opacity ?? 1, 0.4), 1)
+  const persistedGroupPosition = quickButtonsSettings.position ?? null
   const siteId = adapter?.getSiteId() || "_default"
   const siteTheme = getSiteTheme(currentSettings, siteId)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
@@ -88,6 +102,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 工具菜单状态
   const groupRef = useRef<HTMLDivElement>(null)
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false)
+  const [viewportSize, setViewportSize] = useState<ViewportSize>(readViewportSize)
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -102,9 +117,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isToolsMenuOpen])
 
-  const [groupPosition, setGroupPosition] = useState<{ x: number; y: number } | null>(null)
+  const [groupPosition, setGroupPosition] = useState<GroupPosition | null>(persistedGroupPosition)
   const [isDragging, setIsDragging] = useState(false)
   const [isPressing, setIsPressing] = useState(false)
+  const groupPositionRef = useRef<GroupPosition | null>(persistedGroupPosition)
 
   const dragTimerRef = useRef<number | null>(null)
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
@@ -128,6 +144,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [loadingText, setLoadingText] = useState("")
   const abortLoadingRef = useRef(false)
+
+  useEffect(() => {
+    if (draggingRef.current) return
+    groupPositionRef.current = persistedGroupPosition
+    setGroupPosition(persistedGroupPosition)
+  }, [persistedGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
@@ -234,21 +256,76 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return isDark ? <ThemeLightIcon size={20} /> : <ThemeDarkIcon size={20} />
   }
 
-  const clampGroupPosition = useCallback(
-    (x: number, y: number) => {
+  const getGroupBounds = useCallback(
+    (viewport: ViewportSize) => {
       const rect = groupRef.current?.getBoundingClientRect()
-      if (!rect) return { x, y }
+      const width = rect?.width ?? 0
+      const height = rect?.height ?? 0
+      const maxX = Math.max(DRAG_PADDING_PX, viewport.width - width - DRAG_PADDING_PX)
+      const maxY = Math.max(DRAG_PADDING_PX, viewport.height - height - DRAG_PADDING_PX)
 
-      const maxX = Math.max(DRAG_PADDING_PX, window.innerWidth - rect.width - DRAG_PADDING_PX)
-      const maxY = Math.max(DRAG_PADDING_PX, window.innerHeight - rect.height - DRAG_PADDING_PX)
+      return { width, height, maxX, maxY }
+    },
+    [DRAG_PADDING_PX],
+  )
+
+  const clampPixelGroupPosition = useCallback(
+    (x: number, y: number, viewport: ViewportSize) => {
+      const { width, height, maxX, maxY } = getGroupBounds(viewport)
 
       return {
         x: Math.min(Math.max(x, DRAG_PADDING_PX), maxX),
         y: Math.min(Math.max(y, DRAG_PADDING_PX), maxY),
+        width,
+        height,
+        maxX,
+        maxY,
       }
     },
-    [DRAG_PADDING_PX],
+    [DRAG_PADDING_PX, getGroupBounds],
   )
+
+  const toLogicalGroupPosition = useCallback(
+    (x: number, y: number, viewport: ViewportSize): GroupPosition => {
+      const clamped = clampPixelGroupPosition(x, y, viewport)
+      const usableWidth = Math.max(1, clamped.maxX - DRAG_PADDING_PX)
+      const usableHeight = Math.max(1, clamped.maxY - DRAG_PADDING_PX)
+      const xRatio = Math.min(1, Math.max(0, (clamped.x - DRAG_PADDING_PX) / usableWidth))
+      const yRatio = Math.min(1, Math.max(0, (clamped.y - DRAG_PADDING_PX) / usableHeight))
+
+      return { xRatio, yRatio }
+    },
+    [DRAG_PADDING_PX, clampPixelGroupPosition],
+  )
+
+  const resolveLogicalGroupPosition = useCallback(
+    (position: GroupPosition | null, viewport: ViewportSize) => {
+      if (!position) return null
+
+      const { maxX, maxY } = getGroupBounds(viewport)
+      const usableWidth = Math.max(1, maxX - DRAG_PADDING_PX)
+      const usableHeight = Math.max(1, maxY - DRAG_PADDING_PX)
+      const rawX = DRAG_PADDING_PX + position.xRatio * usableWidth
+      const rawY = DRAG_PADDING_PX + position.yRatio * usableHeight
+
+      return {
+        x: Math.min(Math.max(rawX, DRAG_PADDING_PX), maxX),
+        y: Math.min(Math.max(rawY, DRAG_PADDING_PX), maxY),
+      }
+    },
+    [DRAG_PADDING_PX, getGroupBounds],
+  )
+
+  const resolvedGroupPosition = resolveLogicalGroupPosition(groupPosition, viewportSize)
+  const groupBounds = getGroupBounds(viewportSize)
+  const toolsMenuSideClass =
+    resolvedGroupPosition && groupBounds.width > 0
+      ? resolvedGroupPosition.x + groupBounds.width / 2 <= viewportSize.width / 2
+        ? "side-right"
+        : "side-left"
+      : quickButtonsSide === "left"
+        ? "side-right"
+        : "side-left"
 
   // 按钮点击处理器
   const buttonActions: Record<string, (e?: React.MouseEvent<HTMLButtonElement>) => void> = {
@@ -438,7 +515,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     let lastWasSystem = false
 
     // 从设置中获取启用的菜单项，如果没有则使用默认全部显示
-    const enabledIds = currentSettings.toolsMenu ?? TOOLS_MENU_ITEMS.map((item) => item.id)
+    const enabledIds = quickButtonsSettings.toolsMenu ?? TOOLS_MENU_ITEMS.map((item) => item.id)
     const enabledSet = new Set(enabledIds)
 
     for (const item of TOOLS_MENU_ITEMS) {
@@ -510,21 +587,15 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }, [])
 
   useEffect(() => {
-    setGroupPosition(null)
-  }, [quickButtonsSide])
-
-  useEffect(() => {
     let rafId: number | null = null
     let debounceId: number | null = null
     let needsFollowUp = false
 
-    const clampIfNeeded = () => {
-      setGroupPosition((prev) => {
-        if (!prev) return prev
-        const next = clampGroupPosition(prev.x, prev.y)
-        if (next.x === prev.x && next.y === prev.y) return prev
-        return next
-      })
+    const syncViewport = () => {
+      const next = readViewportSize()
+      setViewportSize((prev) =>
+        prev.width === next.width && prev.height === next.height ? prev : next,
+      )
     }
 
     const scheduleRaf = () => {
@@ -535,7 +606,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
       rafId = requestAnimationFrame(() => {
         rafId = null
-        clampIfNeeded()
+        syncViewport()
         if (needsFollowUp) {
           needsFollowUp = false
           scheduleRaf()
@@ -549,7 +620,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       }
       debounceId = window.setTimeout(() => {
         debounceId = null
-        clampIfNeeded()
+        syncViewport()
       }, 120)
     }
 
@@ -566,7 +637,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       if (rafId !== null) cancelAnimationFrame(rafId)
       if (debounceId !== null) window.clearTimeout(debounceId)
     }
-  }, [clampGroupPosition])
+  }, [])
 
   const clearDragTimer = () => {
     if (dragTimerRef.current) {
@@ -576,6 +647,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }
 
   const endDragging = () => {
+    const shouldPersist = draggingRef.current
     setIsPressing(false)
     clearDragTimer()
     dragStartRef.current = null
@@ -592,6 +664,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       }
     }
     pointerIdRef.current = null
+
+    if (shouldPersist) {
+      updateNestedSetting("quickButtons", "position", groupPositionRef.current || undefined)
+    }
   }
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -633,10 +709,18 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     e.preventDefault()
 
+    const currentViewport = readViewportSize()
     const offset = dragOffsetRef.current || { x: 0, y: 0 }
     const nextX = e.clientX - offset.x
     const nextY = e.clientY - offset.y
-    setGroupPosition(clampGroupPosition(nextX, nextY))
+    const nextPosition = toLogicalGroupPosition(nextX, nextY, currentViewport)
+    setViewportSize((prev) =>
+      prev.width === currentViewport.width && prev.height === currentViewport.height
+        ? prev
+        : currentViewport,
+    )
+    groupPositionRef.current = nextPosition
+    setGroupPosition(nextPosition)
   }
 
   const handlePointerUp = () => {
@@ -674,10 +758,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         onClickCapture={handleClickCapture}
         style={{
           position: "fixed",
-          top: groupPosition ? `${groupPosition.y}px` : "50%",
-          left: groupPosition ? `${groupPosition.x}px` : quickButtonsPositionStyle.left,
-          right: groupPosition ? "auto" : quickButtonsPositionStyle.right,
-          transform: groupPosition ? "none" : "translateY(-50%)",
+          top: resolvedGroupPosition ? `${resolvedGroupPosition.y}px` : "50%",
+          left: resolvedGroupPosition
+            ? `${resolvedGroupPosition.x}px`
+            : quickButtonsPositionStyle.left,
+          right: resolvedGroupPosition ? "auto" : quickButtonsPositionStyle.right,
+          transform: resolvedGroupPosition ? "none" : "translateY(-50%)",
           display: "flex",
           flexDirection: "column",
           gap: "8px",
@@ -695,7 +781,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         {/* 工具菜单 Popover */}
         {isToolsMenuOpen && (
           <div
-            className={`quick-menu-popover ${quickButtonsSide === "left" ? "side-right" : "side-left"}`}
+            className={`quick-menu-popover ${toolsMenuSideClass}`}
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}>
